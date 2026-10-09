@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Ziyaret Takip</title>
+  <meta name="theme-color" content="#E99A14">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Ziyaretler">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- GİRİŞ EKRANI -->
+  <section id="girisEkrani" class="giris" hidden>
+    <div class="giris-kutu">
+      <div class="logo logo-buyuk" aria-hidden="true">
+        <svg viewBox="0 0 36 36"><path d="M6 26a6 6 0 0 1 6 6M6 18a14 14 0 0 1 14 14M6 10a22 22 0 0 1 22 22M6 2a30 30 0 0 1 30 30" fill="none" stroke="currentColor" stroke-width="2.6"/></svg>
+        <span>HETRONIC<br>TURKEY</span>
+      </div>
+      <h1>Müşteri Ziyaret Takip</h1>
+      <p id="girisMesaji">Devam etmek için Google hesabınla giriş yap.</p>
+      <button id="girisBtn" class="btn btn-birincil">Google ile giriş yap</button>
+    </div>
+  </section>
+
+  <!-- ANA EKRAN -->
+  <div id="anaEkran" hidden>
+    <header class="ust">
+      <div class="ust-ic">
+        <div class="logo" aria-hidden="true">
+          <svg viewBox="0 0 36 36"><path d="M6 26a6 6 0 0 1 6 6M6 18a14 14 0 0 1 14 14M6 10a22 22 0 0 1 22 22M6 2a30 30 0 0 1 30 30" fill="none" stroke="currentColor" stroke-width="2.6"/></svg>
+          <span>HETRONIC<br>TURKEY</span>
+        </div>
+        <div class="kullanici">
+          <span id="senkDurum" class="senk" title="Senkronizasyon durumu"></span>
+          <span id="kullaniciAdi"></span>
+          <button id="cikisBtn" class="btn-metin">Çıkış</button>
+        </div>
+      </div>
+      <h1 class="baslik">Müşteri Ziyaretleri</h1>
+      <div class="istatistik">
+        <div><b id="sayToplam">0</b><span>Ziyaret edilen</span></div>
+        <div><b id="sayPlanli">0</b><span>Planlanan</span></div>
+        <div><b id="sayFirma">0</b><span>Firma</span></div>
+      </div>
+    </header>
+
+    <div id="demoUyari" class="demo-uyari" hidden>
+      Demo modu: Firebase henüz ayarlanmadı. Veriler sadece bu cihazda tutulur, senkronize olmaz.
+    </div>
+
+    <div class="sekmeler" role="tablist">
+      <button class="sekme aktif" data-sekme="ziyaret" role="tab">Ziyaretler <span id="sekmeSayZ"></span></button>
+      <button class="sekme" data-sekme="plan" role="tab">Planlar <span id="sekmeSayP"></span></button>
+      <button class="sekme" data-sekme="firma" role="tab">Firmalar <span id="sekmeSayF"></span></button>
+      <button class="sekme" data-sekme="rapor" role="tab">Rapor</button>
+    </div>
+
+    <!-- Filtre: Ziyaretler ve Rapor sekmelerinde görünür -->
+    <div id="filtreBar" class="filtre">
+      <label class="filtre-alan">Dönem
+        <select id="fDonem">
+          <option value="tumu">Tüm zamanlar</option>
+          <option value="buay">Bu ay</option>
+          <option value="gecenay">Geçen ay</option>
+          <option value="son3">Son 3 ay</option>
+          <option value="buyil">Bu yıl</option>
+          <option value="gecenyil">Geçen yıl</option>
+          <option value="ozel">Özel aralık</option>
+        </select>
+      </label>
+      <label class="filtre-alan" id="fOzelBas" hidden>Başlangıç <input id="fBas" type="date"></label>
+      <label class="filtre-alan" id="fOzelBit" hidden>Bitiş <input id="fBit" type="date"></label>
+      <label class="filtre-alan">Şehir
+        <select id="fSehir"><option value="">Tüm şehirler</option></select>
+      </label>
+      <label class="filtre-alan">Ziyaret eden
+        <select id="fKatilan"><option value="">Herkes</option></select>
+      </label>
+      <div id="filtreOzet" class="filtre-ozet" hidden>
+        <span id="filtreOzetMetin"></span>
+        <button id="filtreTemizle" class="btn-metin">Filtreyi temizle</button>
+      </div>
+    </div>
+
+    <nav class="arac" id="aracBar">
+      <input id="arama" type="search" placeholder="Firma, kişi veya notlarda ara">
+      <div class="arac-btn">
+        <button id="excelBtn" class="btn btn-koyu">Excel indir</button>
+        <button id="yukleBtn" class="btn btn-acik">Dosya yükle</button>
+        <input id="dosyaInput" type="file" accept=".xlsx" hidden>
+      </div>
+    </nav>
+
+    <main>
+      <ol id="liste" class="liste"></ol>
+      <div id="bosListe" class="bos" hidden>
+        <p id="bosMetin">Henüz ziyaret yok.</p>
+        <p id="bosIpucu">Eklemek için sağ alttaki + düğmesine bas.</p>
+      </div>
+
+      <section id="rapor" class="rapor" hidden></section>
+
+      <div class="cop-bag">
+        <button id="copBtn" class="btn-metin">Silinenler kutusu <span id="copSay"></span></button>
+      </div>
+    </main>
+
+    <button id="ekleBtn" class="fab" aria-label="Yeni ekle">+</button>
+  </div>
+
+  <!-- ZİYARET PENCERESİ -->
+  <dialog id="ziyaretPencere" class="pencere">
+    <form id="ziyaretForm" method="dialog">
+      <div class="pencere-ust">
+        <h2 id="pencereBaslik">Yeni ziyaret</h2>
+        <button type="button" class="kapat" data-kapat aria-label="Kapat">×</button>
+      </div>
+      <div id="degistiUyari" class="uyari" hidden></div>
+      <div id="planBant" class="plan-bant" hidden>
+        <span>Bu ziyarete gidildi mi?</span>
+        <button type="button" id="gerceklestiBtn" class="btn btn-koyu">Ziyaret gerçekleşti</button>
+      </div>
+      <div class="pencere-govde">
+        <label>Firma adı
+          <input name="firma" id="fFirma" required autocomplete="off" list="firmaListesi">
+          <datalist id="firmaListesi"></datalist>
+        </label>
+        <div id="firmaBilgi" class="firma-bilgi" hidden>
+          <span id="firmaBilgiMetin"></span>
+          <button type="button" id="firmaGecmisBtn" class="btn-metin">Geçmişi gör</button>
+        </div>
+
+        <div class="konum">
+          <label>Şehir <input name="sehir" id="fSehirGir" autocomplete="off" list="sehirListesi" placeholder="Örn: İstanbul"></label>
+          <label>Adres / semt <input name="adres" id="fAdres" autocomplete="off" placeholder="Örn: Tuzla OSB"></label>
+          <datalist id="sehirListesi"></datalist>
+        </div>
+        <a id="haritaLink" class="harita-link" target="_blank" rel="noopener" hidden>Haritada aç</a>
+
+        <div class="iki">
+          <label><span id="lblTarih">Tarih</span> <input name="tarih" id="fTarih" type="date"></label>
+          <label>Saat <input name="saat" id="fSaat" type="time"></label>
+        </div>
+
+        <fieldset>
+          <legend id="lblKisiler">Görüşülen kişiler</legend>
+          <div id="kisiler"></div>
+          <datalist id="kisiOnerileri"></datalist>
+          <button type="button" id="kisiEkleBtn" class="btn-metin">+ Kişi ekle</button>
+        </fieldset>
+
+        <label><span id="lblKatilan">Ziyarete katılanlar</span>
+          <input name="katilanlar" id="fKatilanGir" placeholder="Örn: Ahmet Bey, Nebi" autocomplete="off">
+        </label>
+
+        <label><span id="lblNotlar">Notlar / konuşulanlar / alınan kararlar</span>
+          <textarea name="notlar" id="fNotlar" rows="8"></textarea>
+        </label>
+
+        <p id="kayitBilgi" class="kayit-bilgi"></p>
+      </div>
+      <div class="pencere-alt">
+        <button type="button" id="silBtn" class="btn btn-tehlike">Sil</button>
+        <span class="bosluk"></span>
+        <button type="button" class="btn btn-acik" data-kapat>Vazgeç</button>
+        <button type="submit" class="btn btn-birincil">Kaydet</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- FİRMA PANELİ -->
+  <dialog id="firmaPencere" class="pencere">
+    <div class="pencere-kap">
+      <div class="pencere-ust">
+        <h2 id="firmaBaslik"></h2>
+        <button type="button" class="kapat" id="firmaKapat" aria-label="Kapat">×</button>
+      </div>
+      <div class="pencere-govde" id="firmaIcerik"></div>
+      <div class="pencere-alt" id="firmaAlt">
+        <button type="button" id="firmaPlanBtn" class="btn btn-acik">Yeni plan</button>
+        <span class="bosluk"></span>
+        <button type="button" id="firmaZiyaretBtn" class="btn btn-birincil">Yeni ziyaret</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- SİLİNENLER KUTUSU -->
+  <dialog id="copPencere" class="pencere">
+    <div class="pencere-kap">
+      <div class="pencere-ust">
+        <h2>Silinenler kutusu</h2>
+        <button type="button" class="kapat" id="copKapat" aria-label="Kapat">×</button>
+      </div>
+      <div class="pencere-govde">
+        <p class="kayit-bilgi">Silinen kayıtlar 30 gün burada kalır, sonra kalıcı olarak silinir. İki kullanıcı da geri alabilir.</p>
+        <ul id="copListe" class="cop-liste"></ul>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ONAY / BİLGİ PENCERESİ -->
+  <dialog id="onayPencere" class="pencere pencere-kucuk">
+    <div class="pencere-ust"><h2 id="onayBaslik"></h2></div>
+    <div class="pencere-govde" id="onayIcerik"></div>
+    <div class="pencere-alt" id="onayButonlar"></div>
+  </dialog>
+
+  <div id="bildirim" class="bildirim" role="status" aria-live="polite"></div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

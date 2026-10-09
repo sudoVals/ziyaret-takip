@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Sadece bu listedeki Google hesapları okuyup yazabilir.
+    // E-postaları KÜÇÜK HARFLE yaz.
+    function izinli() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower() in [
+          'senin.adresin@gmail.com',
+          'patronun.adresi@gmail.com'
+        ];
+    }
+
+    match /ziyaretler/{ziyaretId} {
+      allow read, write: if izinli();
+    }
+
+    // Diğer her şey kapalı
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
