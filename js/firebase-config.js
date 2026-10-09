@@ -9,6 +9,4 @@ export const firebaseConfig = {
 
 // Uygulamaya girebilecek Google hesapları (küçük harfle).
 // Yeni kişi eklerken Firestore kurallarına da aynı adresi ekle.
-export const IZINLI_EPOSTALAR = [
-  "nebikosehetronic@gmail.com"
-];
+   export const IZINLI_EPOSTALAR = [];
