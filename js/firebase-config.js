@@ -1,25 +1,14 @@
-// ============================================================
-//  FIREBASE AYARLARI
-//  Kurulum rehberindeki (KURULUM.md) adımları izleyip
-//  Firebase konsolundan aldığın değerleri buraya yapıştır.
-//
-//  Değerler "BURAYA" ile başladığı sürece uygulama DEMO MODUNDA
-//  çalışır: veriler sadece o cihazda tutulur, senkronize olmaz.
-// ============================================================
-
 export const firebaseConfig = {
-  apiKey: "BURAYA_API_KEY",
-  authDomain: "BURAYA.firebaseapp.com",
-  projectId: "BURAYA",
-  storageBucket: "BURAYA.appspot.com",
-  messagingSenderId: "BURAYA",
-  appId: "BURAYA"
+  apiKey: "AIzaSyB3wJWTJhBJaKzwI80MN9pwk1eitUTeCoc",
+  authDomain: "hetronic-ziyaret-6cdab.firebaseapp.com",
+  projectId: "hetronic-ziyaret-6cdab",
+  storageBucket: "hetronic-ziyaret-6cdab.firebasestorage.app",
+  messagingSenderId: "83000505559",
+  appId: "1:83000505559:web:7e692b2cf6faa0c5322c92"
 };
 
-// Uygulamaya girebilecek Google hesapları (küçük harfle yaz).
-// Asıl koruma Firestore kurallarındadır; bu liste sadece
-// yetkisiz biri girerse ona düzgün bir mesaj göstermek içindir.
+// Uygulamaya girebilecek Google hesapları (küçük harfle).
+// Yeni kişi eklerken Firestore kurallarına da aynı adresi ekle.
 export const IZINLI_EPOSTALAR = [
-  "senin.adresin@gmail.com",
-  "patronun.adresi@gmail.com"
+  "nebikosehetronic@gmail.com"
 ];
