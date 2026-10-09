@@ -1,5 +1,6 @@
 import { firebaseConfig, IZINLI_EPOSTALAR } from "./firebase-config.js";
 import { DemoStore, FirebaseStore, CakismaHatasi, SilinmisHatasi } from "./store.js";
+import { buyukHarf, kelimeBasi, cumleBasi } from "./metin.js";
 import { excelOlustur, excelOku, birlestirmePlani, siralaZiyaretler, zamanGoster, icerikAnahtari } from "./excel.js";
 
 const $ = s => document.querySelector(s);
@@ -11,6 +12,7 @@ const tarihGoster = iso => { const [y, m, d] = (iso || "").split("-"); return y 
 const norm = s => String(s || "").trim().replace(/\s+/g, " ").toLocaleLowerCase("tr");
 const AYLAR = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
 const COP_GUN = 30;
+const HATIRLATMA_GUN = 4;     // plan tarihine kaç gün kala hatırlatılsın
 
 const demoMu = !firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith("BURAYA");
 let store;
@@ -116,6 +118,7 @@ function veriGeldi(liste, meta) {
   ekraniCiz();
   senkDurum(meta);
   if ($("#copPencere").open) copCiz();
+  setTimeout(hatirlatmaKontrol, 400);
 
   // Açık pencerede gösterilen kayıt başkası tarafından değişti mi?
   if (acikKayit && acikKayit.id && $("#ziyaretPencere").open) {
@@ -156,8 +159,8 @@ function firmalariHesapla() {
     const k = norm(z.firma);
     if (!k) continue;
     let f = m.get(k);
-    if (!f) { f = { anahtar: k, ad: z.firma, sehir: "", adres: "", kayitlar: [], ziyaretSay: 0, planSay: 0, ilk: "", son: "", kisiler: new Map() }; m.set(k, f); }
-    f.ad = z.firma;
+    if (!f) { f = { anahtar: k, ad: buyukHarf(z.firma), sehir: "", adres: "", kayitlar: [], ziyaretSay: 0, planSay: 0, ilk: "", son: "", kisiler: new Map() }; m.set(k, f); }
+    f.ad = buyukHarf(z.firma);
     if (z.sehir) f.sehir = z.sehir;
     if (z.adres) f.adres = z.adres;
     f.kayitlar.push(z);
@@ -320,7 +323,7 @@ function listeCiz(tamListe) {
     li.innerHTML = `
       <div class="no">${sira.get(z.id)}</div>
       <div class="oge-orta">
-        <div class="oge-firma">${esc(z.firma)}</div>
+        <div class="oge-firma">${esc(buyukHarf(z.firma))}</div>
         <div class="oge-alt">${sehir ? `<span class="sehir">${esc(sehir)}</span> · ` : ""}${esc(alt)}</div>
       </div>
       <div class="oge-tarih">${tarihGoster(z.tarih)}${z.saat ? `<small>${esc(z.saat)}</small>` : ""}${plan ? planEtiketi(z) : ""}</div>`;
@@ -430,7 +433,7 @@ function raporCiz() {
   const firmaSay = new Map(), sehirSay = new Map(), kisiSet = new Set(), edenSay = new Map();
   for (const z of liste) {
     const fk = norm(z.firma);
-    firmaSay.set(fk, { ad: firmalar.get(fk)?.ad || z.firma, sayi: (firmaSay.get(fk)?.sayi || 0) + 1 });
+    firmaSay.set(fk, { ad: firmalar.get(fk)?.ad || buyukHarf(z.firma), sayi: (firmaSay.get(fk)?.sayi || 0) + 1 });
     const s = kayitSehri(z);
     if (s) sehirSay.set(norm(s), { ad: s, sayi: (sehirSay.get(norm(s))?.sayi || 0) + 1 });
     for (const k of z.kisiler || []) kisiSet.add(fk + "|" + norm(k.ad));
@@ -529,8 +532,10 @@ function kisiSatiri(k = { ad: "", pozisyon: "" }) {
                  <input placeholder="Pozisyon" class="k-poz" value="${esc(k.pozisyon)}">
                  <button type="button" class="kisi-sil" aria-label="Kişiyi kaldır">×</button>`;
   d.querySelector(".kisi-sil").onclick = () => d.remove();
+  d.querySelector(".k-poz").addEventListener("change", e => { e.target.value = cumleBasi(e.target.value); });
   // Rehberden seçilen kişinin pozisyonunu otomatik doldur
   d.querySelector(".k-ad").addEventListener("change", e => {
+    e.target.value = kelimeBasi(e.target.value);
     const poz = d.querySelector(".k-poz");
     if (poz.value.trim()) return;
     const kk = norm(e.target.value);
@@ -588,6 +593,12 @@ function haritaGuncelle() {
 }
 
 form.firma.addEventListener("input", firmaBilgisiGuncelle);
+// Alandan çıkınca yazımı düzelt: firma tamamı büyük, isim/şehir kelime başları, diğerleri cümle başları
+form.firma.addEventListener("change", () => { form.firma.value = buyukHarf(form.firma.value); });
+form.sehir.addEventListener("change", () => { form.sehir.value = kelimeBasi(form.sehir.value); haritaGuncelle(); });
+form.adres.addEventListener("change", () => { form.adres.value = cumleBasi(form.adres.value); haritaGuncelle(); });
+form.katilanlar.addEventListener("change", () => { form.katilanlar.value = kelimeBasi(form.katilanlar.value); });
+form.notlar.addEventListener("change", () => { form.notlar.value = cumleBasi(form.notlar.value); });
 form.firma.addEventListener("change", () => {
   // Bilinen firma seçildiyse ve konum boşsa konumu doldur
   const f = firmalar.get(norm(form.firma.value));
@@ -601,7 +612,7 @@ $("#firmaGecmisBtn").onclick = () => firmaPaneliAc(norm(form.firma.value), true)
 
 function formuDoldur(z) {
   formModu(planMi(z) ? "plan" : "ziyaret");
-  form.firma.value = z.firma || "";
+  form.firma.value = buyukHarf(z.firma);
   form.sehir.value = z.sehir || "";
   form.adres.value = z.adres || "";
   form.tarih.value = z.tarih || (planMi(z) ? "" : bugun());
@@ -736,7 +747,7 @@ function copCiz() {
     const kalan = Math.max(0, COP_GUN - gecen);
     return `<li>
       <div class="cop-bilgi">
-        <b>${esc(z.firma)}</b>
+        <b>${esc(buyukHarf(z.firma))}</b>
         <span class="kayit-bilgi">${planMi(z) ? "Plan" : "Ziyaret"}${z.tarih ? " · " + tarihGoster(z.tarih) : ""} · ${esc(z.silen || "")} sildi, ${kalan} gün sonra kalıcı silinecek</span>
       </div>
       <div class="cop-btn">
@@ -758,6 +769,69 @@ $("#copKapat").onclick = () => $("#copPencere").close();
 
 // Pencerenin dışına (karartılmış alana) tıklayınca kapat
 ["#firmaPencere", "#copPencere"].forEach(s => $(s).addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.close(); }));
+
+// ------------------------------------------------------------ Plan hatırlatma
+// Plan tarihine 4 gün kala, tarihe kadar her gün bir kez ekranda hatırlatma gösterir.
+// "Bugün gösterildi" bilgisi her cihazda ayrı tutulur.
+const HATIRLATMA_ANAHTAR = "ziyaret-takip-hatirlatma";
+let hatirlatmaBekleyen = [];
+
+function hatirlatmaOku() {
+  try { const v = JSON.parse(localStorage.getItem(HATIRLATMA_ANAHTAR)); if (v && v.tarih === bugun()) return v; } catch {}
+  return { tarih: bugun(), idler: [] };
+}
+function hatirlatmaYaz(v) { try { localStorage.setItem(HATIRLATMA_ANAHTAR, JSON.stringify(v)); } catch {} }
+
+function yaklasanPlanlar() {
+  return ziyaretler.filter(z => planMi(z) && z.tarih && gunFarki(z.tarih) >= 0 && gunFarki(z.tarih) <= HATIRLATMA_GUN);
+}
+
+function kalanMetni(z) {
+  const f = gunFarki(z.tarih);
+  return f === 0 ? "Bugün" : f === 1 ? "Yarın" : `${f} gün kaldı`;
+}
+
+function hatirlatmaKontrol() {
+  if ($("#anaEkran").hidden || document.querySelector("dialog[open]")) return;
+  const liste = yaklasanPlanlar();
+  const kayit = hatirlatmaOku();
+  if (!liste.some(z => !kayit.idler.includes(z.id))) return;   // bugün hepsi gösterildi
+
+  hatirlatmaBekleyen = liste.map(z => z.id);
+  $("#hatirlatmaListe").innerHTML = liste.map(z => `
+    <li tabindex="0" data-plan="${esc(z.id)}">
+      <div class="hat-ust">
+        <b>${esc(buyukHarf(z.firma))}</b>
+        <span class="etiket ${gunFarki(z.tarih) === 0 ? "bugun" : ""}">${kalanMetni(z)}</span>
+      </div>
+      <div class="kayit-bilgi">${tarihGoster(z.tarih)}${z.saat ? " · " + esc(z.saat) : ""}${kayitSehri(z) ? " · " + esc(kayitSehri(z)) : ""}${z.katilanlar ? " · " + esc(z.katilanlar) : ""}</div>
+      ${z.notlar ? `<div class="hat-not">${esc(z.notlar.split("\n")[0])}</div>` : ""}
+    </li>`).join("");
+  $("#hatirlatmaListe").querySelectorAll("[data-plan]").forEach(li => {
+    const ac = () => {
+      const z = ziyaretler.find(x => x.id === li.dataset.plan);
+      $("#hatirlatmaPencere").close();
+      if (z) { sekmeSec("plan"); pencereAc(z); }
+    };
+    li.onclick = ac;
+    li.onkeydown = e => { if (e.key === "Enter") ac(); };
+  });
+  $("#hatirlatmaPencere").showModal();
+}
+
+// Kapatıldığında bugün için "gösterildi" olarak işaretle
+$("#hatirlatmaPencere").addEventListener("close", () => {
+  const kayit = hatirlatmaOku();
+  kayit.idler = [...new Set([...kayit.idler, ...hatirlatmaBekleyen])];
+  hatirlatmaYaz(kayit);
+  hatirlatmaBekleyen = [];
+});
+$("#hatirlatmaKapat").onclick = () => $("#hatirlatmaPencere").close();
+
+// Başka bir pencere kapanınca, uygulamaya geri dönülünce ve gün değişince tekrar kontrol et
+document.querySelectorAll("dialog:not(#hatirlatmaPencere)").forEach(d => d.addEventListener("close", () => setTimeout(hatirlatmaKontrol, 300)));
+document.addEventListener("visibilitychange", () => { if (!document.hidden) hatirlatmaKontrol(); });
+setInterval(hatirlatmaKontrol, 30 * 60 * 1000);
 
 // ------------------------------------------------------------ Excel
 let excelJSYukleniyor;

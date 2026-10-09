@@ -343,3 +343,34 @@ h3.bolum {
   .sekme span { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* ---------- Siyah dolgular yerine turuncu ---------- */
+.sekme.aktif { background: var(--turuncu); color: #fff; }
+.rapor-ozet div { background: var(--turuncu); color: #fff; }
+.rapor-ozet span { opacity: 1; }
+.no { background: var(--turuncu); color: #fff; }
+.liste.plan-modu .no { background: var(--turuncu-acik); color: var(--turuncu-koyu); border: 1px solid #F1D592; }
+.btn-koyu { background: var(--turuncu); color: #fff; }
+.btn-koyu:hover { filter: brightness(1.07); }
+.etiket.koyu { background: var(--turuncu); color: #fff; }
+.bildirim { background: var(--turuncu-koyu); color: #fff; }
+.ay-ipucu { background: var(--turuncu-koyu); color: #fff; }
+
+/* ---------- Yazım ---------- */
+#fFirma { text-transform: uppercase; }
+#fFirma::placeholder { text-transform: none; }
+
+/* ---------- Plan hatırlatma ---------- */
+.hatirlatma-liste { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.hatirlatma-liste li {
+  border: 1px solid var(--cizgi); border-left: 4px solid var(--turuncu); border-radius: 10px; padding: 10px 12px;
+  cursor: pointer; display: flex; flex-direction: column; gap: 3px;
+}
+.hatirlatma-liste li:hover, .hatirlatma-liste li:focus-visible { background: var(--turuncu-acik); outline: none; }
+.hat-ust { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.hat-ust b { font: 500 22px/1 var(--baslik-font); padding-top: 3px; }
+.hat-ust .etiket { margin-top: 0; flex: none; }
+.hat-not { font-size: 14px; }
+@media (max-width: 560px) {
+  .pencere.pencere-kucuk { height: auto; max-height: calc(100dvh - 40px); border-radius: 18px; }
+}

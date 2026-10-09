@@ -1,3 +1,5 @@
+import { buyukHarf } from "./metin.js";
+
 // Excel dışa/içe aktarma ve birleştirme mantığı.
 // ExcelJS kütüphanesi parametre olarak verilir (tarayıcıda global, testte npm).
 
@@ -61,6 +63,10 @@ export function zamanGoster(iso) {
 export const SAYFA_ZIYARET = "Ziyaretler";
 export const SAYFA_PLAN = "Planlanan Ziyaretler";
 
+const YAZI_TIPI = "Times New Roman";
+const INCE = { style: "thin", color: { argb: "FF7F7F7F" } };
+const CERCEVE = { top: INCE, left: INCE, bottom: INCE, right: INCE };
+
 function sayfaEkle(wb, ad, liste, plan) {
   const ws = wb.addWorksheet(ad, { views: [{ state: "frozen", ySplit: 1 }] });
   ws.columns = SUTUNLAR.map(s => ({ header: (plan && s.plan) || s.header, key: s.key, width: s.width, hidden: !!s.hidden }));
@@ -68,10 +74,10 @@ function sayfaEkle(wb, ad, liste, plan) {
   const baslik = ws.getRow(1);
   baslik.height = 24;
   baslik.eachCell(c => {
-    c.font = { bold: true, color: { argb: plan ? "FFFBE6C8" : "FF000000" } };
+    c.font = { name: YAZI_TIPI, size: 11, bold: true, color: { argb: plan ? "FFFBE6C8" : "FF000000" } };
     c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: plan ? "FF0B0B0B" : "FFE99A14" } };
     c.alignment = { vertical: "middle", horizontal: "center", wrapText: true };
-    c.border = { bottom: { style: "thin", color: { argb: "FF000000" } } };
+    c.border = CERCEVE;
   });
 
   siralaZiyaretler(liste).forEach((z, i) => {
@@ -79,7 +85,7 @@ function sayfaEkle(wb, ad, liste, plan) {
       no: i + 1,
       tarih: isoTarihtenUTC(z.tarih),
       saat: z.saat || "",
-      firma: z.firma || "",
+      firma: buyukHarf(z.firma),
       sehir: z.sehir || "",
       adres: z.adres || "",
       kisiler: kisilerMetni(z.kisiler),
@@ -93,9 +99,12 @@ function sayfaEkle(wb, ad, liste, plan) {
     row.getCell("tarih").numFmt = "dd.mm.yyyy";
     row.eachCell({ includeEmpty: true }, c => {
       c.alignment = { vertical: "top", wrapText: true };
+      c.font = { name: YAZI_TIPI, size: 11 };
+      c.border = CERCEVE;
       if (i % 2 === 1) c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFDF3E1" } };
     });
     row.getCell("no").alignment = { vertical: "top", horizontal: "center" };
+    row.getCell("firma").font = { name: YAZI_TIPI, size: 11, bold: true };
   });
   ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: SUTUNLAR.filter(s => !s.hidden).length } };
 }

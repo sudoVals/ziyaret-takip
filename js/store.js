@@ -5,6 +5,8 @@
 //   sil(id)  -> silinenler kutusuna taşır
 //   geriAl(id), kaliciSil(id), topluUygula(plan)
 
+import { buyukHarf, kelimeBasi, cumleBasi } from "./metin.js";
+
 export class CakismaHatasi extends Error {
   constructor(sunucudaki) { super("cakisma"); this.sunucudaki = sunucudaki; }
 }
@@ -13,14 +15,14 @@ export class SilinmisHatasi extends Error { constructor() { super("silinmis"); }
 const simdi = () => new Date().toISOString();
 const temizle = v => ({
   tur: v.tur === "plan" ? "plan" : "ziyaret",
-  firma: (v.firma || "").trim().replace(/\s+/g, " "),
-  sehir: (v.sehir || "").trim(),
-  adres: (v.adres || "").trim(),
+  firma: buyukHarf((v.firma || "").trim().replace(/\s+/g, " ")),
+  sehir: kelimeBasi((v.sehir || "").trim()),
+  adres: cumleBasi((v.adres || "").trim()),
   tarih: v.tarih || "",
   saat: v.saat || "",
-  kisiler: (v.kisiler || []).filter(k => (k.ad || "").trim()).map(k => ({ ad: k.ad.trim(), pozisyon: (k.pozisyon || "").trim() })),
-  katilanlar: (v.katilanlar || "").trim(),
-  notlar: (v.notlar || "").trim()
+  kisiler: (v.kisiler || []).filter(k => (k.ad || "").trim()).map(k => ({ ad: kelimeBasi(k.ad.trim()), pozisyon: cumleBasi((k.pozisyon || "").trim()) })),
+  katilanlar: kelimeBasi((v.katilanlar || "").trim()),
+  notlar: cumleBasi((v.notlar || "").trim())
 });
 
 // ---------------------------------------------------------------- DEMO

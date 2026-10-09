@@ -1,7 +1,7 @@
 // Uygulama dosyalarını önbelleğe alır; internet yokken de açılır.
 // Uygulamayı güncellediğinde SURUM'u değiştir.
-const SURUM = "ziyaret-v3";
-const DOSYALAR = ["./", "index.html", "css/style.css", "js/app.js", "js/store.js", "js/excel.js",
+const SURUM = "ziyaret-v4";
+const DOSYALAR = ["./", "index.html", "css/style.css", "js/app.js", "js/store.js", "js/excel.js", "js/metin.js",
   "js/firebase-config.js", "manifest.json", "icons/icon-192.png", "icons/icon-512.png"];
 
 self.addEventListener("install", e => {
