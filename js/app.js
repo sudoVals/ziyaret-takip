@@ -525,6 +525,73 @@ $("#firmaPlanBtn").onclick = () => firmadanYeni("plan");
 // ------------------------------------------------------------ Ziyaret penceresi
 const form = $("#ziyaretForm");
 
+// ------------------------------------------------------------ Tarih alanı (her zaman GG.AA.YYYY)
+// Tarayıcının kendi tarih kutusu dil ayarına göre AA/GG/YYYY gösterebildiği için
+// görünen kısım bizim metin kutumuz; asıl değer gizli tarih kutusunda (YYYY-AA-GG) tutulur.
+const TAKVIM_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 10h18M8 3v4M16 3v4" stroke="currentColor" stroke-width="2" fill="none"/></svg>`;
+
+function tarihAlaniKur(gercek) {
+  const kap = document.createElement("div");
+  kap.className = "tarih-alan";
+  const metin = document.createElement("input");
+  metin.type = "text"; metin.inputMode = "numeric"; metin.placeholder = "GG.AA.YYYY";
+  metin.maxLength = 10; metin.autocomplete = "off"; metin.id = gercek.id + "Metin";
+  const simge = document.createElement("span");
+  simge.className = "tarih-simge"; simge.innerHTML = TAKVIM_SVG;
+  gercek.parentNode.insertBefore(kap, gercek);
+  kap.append(metin, simge, gercek);
+  gercek.classList.add("tarih-gizli");
+  gercek.tabIndex = -1;
+  gercek.setAttribute("aria-label", "Takvimden seç");
+
+  const senk = () => { metin.value = tarihGoster(gercek.value); metin.classList.remove("hatali"); };
+  gercek._senk = senk;
+  gercek.addEventListener("change", senk);
+  gercek.addEventListener("input", senk);
+  // Masaüstünde takvim simgesine tıklayınca takvimi aç
+  gercek.addEventListener("click", () => { try { gercek.showPicker(); } catch {} });
+
+  const ayarla = iso => { if (gercek.value !== iso) { gercek.value = iso; gercek.dispatchEvent(new Event("change", { bubbles: true })); } };
+  metin.addEventListener("input", () => {
+    const r = metin.value.replace(/\D/g, "").slice(0, 8);
+    let s = r.slice(0, 2);
+    if (r.length > 2) s += "." + r.slice(2, 4);
+    if (r.length > 4) s += "." + r.slice(4);
+    metin.value = s;
+    metin.classList.remove("hatali");
+    if (!r.length) { ayarla(""); return; }
+    if (r.length === 8) {
+      const g = +r.slice(0, 2), a = +r.slice(2, 4), y = +r.slice(4);
+      const d = new Date(y, a - 1, g);
+      if (d.getFullYear() === y && d.getMonth() === a - 1 && d.getDate() === g) ayarla(`${y}-${iki(a)}-${iki(g)}`);
+      else metin.classList.add("hatali");
+    }
+  });
+  metin.addEventListener("blur", () => {
+    if (!metin.value) return;
+    if (metin.value.replace(/\D/g, "").length < 8 || metin.classList.contains("hatali")) {
+      bildir("Tarihi GG.AA.YYYY şeklinde gir, örn. 13.10.2026");
+      senk();
+    }
+  });
+  senk();
+}
+["#fTarih", "#fBas", "#fBit"].forEach(s => tarihAlaniKur($(s)));
+
+// Saat alanı: her zaman 24 saat, SS:DD
+form.saat.addEventListener("input", () => {
+  const r = form.saat.value.replace(/\D/g, "").slice(0, 4);
+  form.saat.value = r.length > 2 ? r.slice(0, 2) + ":" + r.slice(2) : r;
+});
+form.saat.addEventListener("blur", () => {
+  const v = form.saat.value;
+  if (!v) return;
+  const r = v.replace(/\D/g, "");
+  const s = r.length <= 2 ? +r : +r.slice(0, r.length - 2), d = r.length <= 2 ? 0 : +r.slice(-2);
+  if (s > 23 || d > 59) { bildir("Saati SS:DD şeklinde gir, örn. 14:30"); form.saat.value = ""; return; }
+  form.saat.value = `${iki(s)}:${iki(d)}`;
+});
+
 function kisiSatiri(k = { ad: "", pozisyon: "" }) {
   const d = document.createElement("div");
   d.className = "kisi";
@@ -616,6 +683,7 @@ function formuDoldur(z) {
   form.sehir.value = z.sehir || "";
   form.adres.value = z.adres || "";
   form.tarih.value = z.tarih || (planMi(z) ? "" : bugun());
+  form.tarih._senk();
   form.saat.value = z.saat || "";
   form.katilanlar.value = z.katilanlar || ""; form.notlar.value = z.notlar || "";
   $("#kisiler").innerHTML = "";
@@ -652,6 +720,7 @@ $("#gerceklestiBtn").onclick = () => {
   const planNotu = form.notlar.value.trim();
   formModu("ziyaret");
   form.tarih.value = bugun();
+  form.tarih._senk();
   form.notlar.value = planNotu ? `Plan notu: ${planNotu}\n\n` : "";
   $("#planBant").hidden = true;
   $("#pencereBaslik").textContent = "Ziyareti tamamla";

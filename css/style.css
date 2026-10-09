@@ -374,3 +374,18 @@ h3.bolum {
 @media (max-width: 560px) {
   .pencere.pencere-kucuk { height: auto; max-height: calc(100dvh - 40px); border-radius: 18px; }
 }
+
+/* ---------- Tarih alanı ---------- */
+.tarih-alan { position: relative; display: flex; align-items: center; min-width: 0; }
+.tarih-alan input[type=text] { width: 100%; padding-right: 44px; font-variant-numeric: tabular-nums; }
+.tarih-alan input.hatali { outline: 2px solid var(--kirmizi); }
+.tarih-simge {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--turuncu-koyu);
+  display: grid; place-items: center; pointer-events: none;
+}
+/* Gerçek tarih kutusu, simgenin üzerinde görünmez duruyor: dokununca takvim açılır */
+.tarih-alan .tarih-gizli {
+  position: absolute !important; right: 2px; top: 50%; transform: translateY(-50%);
+  width: 40px !important; height: 40px; padding: 0 !important; border: 0 !important; opacity: 0; cursor: pointer; background: none;
+}
+.tarih-alan .tarih-gizli::-webkit-calendar-picker-indicator { position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
